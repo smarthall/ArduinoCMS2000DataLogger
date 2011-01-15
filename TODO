@@ -7,3 +7,13 @@
 * Log messages to one file, and data to another
 * Use the 1Kb of flash to store data while SDcard is missing
 * Migrate to NewSoftSerial
+* Make it easier to port to another platform
+* Store commands and responses in a single 'data' array
+* Verify the data returned from a poll
+* Design a board to fit all components on, and a container
+* Have a status LED for OpenLog and for Inverter
+* Don't log during handshake, log after
+* Switch to allow removal of SDCard while running live
+* Wiring diagrams
+* Benchmark battery usage
+* Add ambient light meter

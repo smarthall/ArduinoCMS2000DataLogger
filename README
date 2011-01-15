@@ -1,0 +1,3 @@
+Embedded device to record solar power generation statistics from a CMS2000 Solar Inverter
+
+Designed to run on an Arduino, but meant to be easy to port to another platform.

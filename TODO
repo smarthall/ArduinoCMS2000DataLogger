@@ -1,0 +1,9 @@
+* Survive the Inverter turning off at night
+* Calculate the checksum to work on more than just one inverter
+* Log the data to the openlog as CSV
+* Add support for a RTC such as: http://www.littlebirdelectronics.com/products/Real-Time-Clock-Module.html
+* Fix all the timekeeping code to survive millis() rollover
+* Seperate CMS2000 code to its own library
+* Log messages to one file, and data to another
+* Use the 1Kb of flash to store data while SDcard is missing
+* Migrate to NewSoftSerial

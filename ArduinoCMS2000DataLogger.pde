@@ -104,7 +104,7 @@ boolean checkResp(int count, int respCode) {
 
 boolean handshake() {
   int respCount, checksum = 0;
-  bytes bytesTo;
+  byte bytesTo;
   
   // Ask for the inverters Serial
   openlog.println("Requesting Serial Number");
@@ -129,10 +129,10 @@ boolean handshake() {
   
   // Write out the command
   // Manually because we need to calculate checksum
-  bytesTo = commands[command][0] + 1;
+  bytesTo = commands[CMD_SEND_SERIAL][0] + 1;
   for (int i = 1; i <= bytesTo; i++) {
-    Serial.write(commands[command][i]);
-    checksum += commands[command][i];
+    Serial.write(commands[CMD_SEND_SERIAL][i]);
+    checksum += commands[CMD_SEND_SERIAL][i];
   }
   
   for (int i = 0; i < 10; i++) {

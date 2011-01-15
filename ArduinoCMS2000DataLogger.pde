@@ -103,7 +103,8 @@ boolean checkResp(int count, int respCode) {
 }
 
 boolean handshake() {
-  int respCount;
+  int respCount, checksum = 0;
+  bytes bytesTo;
   
   // Ask for the inverters Serial
   openlog.println("Requesting Serial Number");
@@ -126,11 +127,24 @@ boolean handshake() {
   openlog.print("Serial Number is: ");
   openlog.println(serial);
   
-  // Hack till we get checksum stuff written
-  byte hack[] = {0xAA, 0xAA, 0x01, 0x00, 0x00, 0x00, 0x00, 0x01, 0x0B, 0x30, 0x39, 0x30, 0x35, 0x42, 0x4F, 0x30, 0x31, 0x33, 0x39, 0x01, 0x03, 0x8e};
-  for (int i = 0; i < 22; i++) {
-    Serial.write(hack[i]);
+  // Write out the command
+  // Manually because we need to calculate checksum
+  bytesTo = commands[command][0] + 1;
+  for (int i = 1; i <= bytesTo; i++) {
+    Serial.write(commands[command][i]);
+    checksum += commands[command][i];
   }
+  
+  for (int i = 0; i < 10; i++) {
+    Serial.write(serial[i]);
+    checksum += serial[i];
+  }
+  
+  Serial.write(0x01);
+  checksum += 0x01;
+
+  Serial.write(checksum >> 8);
+  Serial.write(checksum & 0xFF);
   
   // Wait for three seconds
   respCount = getResp(3000);

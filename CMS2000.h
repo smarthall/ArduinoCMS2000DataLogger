@@ -22,14 +22,24 @@
 
 #include <WProgram.h>
 
+#define CMS2000_SUCCESS        0
+#define CMS2000_ERROR_NOSTART  1
+#define CMS2000_ERROR_INVALID  2
+#define CMS2000_ERROR_SIZE     3
+#define CMS2000_ERROR_TIMEOUT  4
+#define CMS2000_ERROR_CHECKSUM 5
+
 class CMS2000
 {
   public:
     CMS2000();
   private:
-    void sendCmd(int src, int dst, byte mode, byte type, byte extraCount, byte *extraData);
-    byte sendVal(byte toSend);
-    byte sendVal(int toSend);
+    void sendCmd(unsigned int src, unsigned int dst, byte mode, byte type, byte extraCount, byte *extraData);
+    int recvCmd(unsigned int *src, unsigned int *dst, byte *mode, byte *type, byte *extraCount, byte *extraData);
+    byte sendByte(byte toSend);
+    byte sendInt(int toSend);
+    int recvByte(unsigned int *checksum, byte *byteRead, long int quitAt);
+    int recvInt(unsigned int *checksum, unsigned int *intRead, long int quitAt);
 };
 
 

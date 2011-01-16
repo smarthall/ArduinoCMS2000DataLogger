@@ -20,6 +20,9 @@
 #include <WProgram.h>
 #include "CMS2000.h"
 
+// Recieve Timeout
+#define CMS2000_RECIEVE_TIMEOUT 3000
+
 // Command Modes
 #define CMS2000_MODE_NETWORK 0
 #define CMS2000_MODE_COMMS   1
@@ -49,46 +52,89 @@
 #define CMS2000_SERIAL       0x80
 #define CMS2000_ACK          0x81
 #define CMS2000_DATA         0x82
-#define CMS2000_INFO         0x83
+#define CMS2000_INFO         0x832
 
 
-void CMS2000::sendCmd(int src, int dst, byte mode, byte type, byte extraCount = 0, byte *extraData = NULL) {
+void CMS2000::sendCmd(unsigned int src, unsigned int dst, byte mode,
+                      byte type, byte extraCount = 0, byte *extraData = NULL) {
   int checksum = 0;
   
   // Command beginning
-  checksum += sendVal(0xAA);
-  checksum += sendVal(0xAA);
+  checksum += sendInt(0xAAAA);
   
   // Source Address
-  checksum += sendVal(src);
+  checksum += sendInt(src);
   
   // Destination Address
-  checksum += sendVal(dst);
+  checksum += sendInt(dst);
   
   // Command Mode
-  checksum += sendVal(mode);
+  checksum += sendByte(mode);
   
   // Command Type
-  checksum += sendVal(type);
+  checksum += sendByte(type);
   
   // Extra Byte Count
-  checksum += sendVal(extraCount);
+  checksum += sendByte(extraCount);
   
   // Extra Bytes
   for (int i = 0; i < extraCount; i++)
-    checksum += sendVal(extraData[i]);
+    checksum += sendByte(extraData[i]);
   
   // Checksum
-  sendVal(checksum);
+  sendInt(checksum);
 }
 
-byte CMS2000::sendVal(byte toSend) {
+int CMS2000::recvCmd(unsigned int *src, unsigned int *dst, byte *mode,
+                      byte *type, byte *extraCount, byte *extraData) {
+  long int quitAt;                      
+  unsigned int intRead;
+  unsigned int readChecksum;
+  unsigned int checksum = 0;
+  
+  // When is quitting time?
+  quitAt = millis() + CMS2000_RECIEVE_TIMEOUT;
+  
+  if (recvInt(&checksum, &intRead, quitAt) != CMS2000_SUCCESS)
+    return CMS2000_ERROR_TIMEOUT;
+    
+  if (intRead != 0xAAAA)
+    return CMS2000_ERROR_NOSTART;
+    
+  if (recvInt(&checksum, src, quitAt) != CMS2000_SUCCESS)
+    return CMS2000_ERROR_TIMEOUT;
+    
+  if (recvInt(&checksum, dst, quitAt) != CMS2000_SUCCESS)
+    return CMS2000_ERROR_TIMEOUT;
+    
+  if (recvByte(&checksum, mode, quitAt) != CMS2000_SUCCESS)
+    return CMS2000_ERROR_TIMEOUT;
+    
+  if (recvByte(&checksum, type, quitAt) != CMS2000_SUCCESS)
+    return CMS2000_ERROR_TIMEOUT;
+    
+  if (recvByte(&checksum, extraCount, quitAt) != CMS2000_SUCCESS)
+    return CMS2000_ERROR_TIMEOUT;
+  
+  for (int i = 0; i < *extraCount; i++) {
+    if (recvByte(&checksum, extraData + i, quitAt) != CMS2000_SUCCESS)
+      return CMS2000_ERROR_TIMEOUT;
+  }
+  
+  if (recvInt(&intRead, &readChecksum, quitAt) != CMS2000_SUCCESS)
+    return CMS2000_ERROR_TIMEOUT;
+    
+  if (readChecksum != checksum)
+    return CMS2000_ERROR_CHECKSUM;
+}
+
+byte CMS2000::sendByte(byte toSend) {
   Serial.write(toSend);
   
   return toSend;
 }
 
-byte CMS2000::sendVal(int toSend) {
+byte CMS2000::sendInt(int toSend) {
   byte hi_byte  = toSend >> 8;
   byte low_byte = toSend & 0xFF;
   
@@ -96,6 +142,36 @@ byte CMS2000::sendVal(int toSend) {
   Serial.write(low_byte);
   
   return hi_byte + low_byte;
+}
+
+int CMS2000::recvByte(unsigned int *checksum, byte *byteRead, long int quitAt) {
+  while (millis() < quitAt) {
+    if (Serial.available() > 0) {
+      *byteRead = Serial.read();
+      *checksum += *byteRead;
+      
+      return CMS2000_SUCCESS;
+    }
+  }
+  
+  return CMS2000_ERROR_TIMEOUT;
+}
+
+int CMS2000::recvInt(unsigned int *checksum, unsigned int *intRead, long int quitAt) {
+    byte hi_byte, low_byte;
+  
+    while (millis() < quitAt) {
+    if (Serial.available() > 1) {
+      hi_byte = Serial.read();
+      low_byte = Serial.read();
+      *checksum += (int)hi_byte + low_byte;
+      *intRead = (hi_byte * 0x10) + low_byte;
+      
+      return CMS2000_SUCCESS;
+    }
+  }
+  
+  return CMS2000_ERROR_TIMEOUT;
 }
 
 

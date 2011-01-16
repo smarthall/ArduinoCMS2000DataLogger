@@ -192,19 +192,46 @@ void setup() {
   openlog.println("Performing Handshake... ");
   if (handshake()) {
     openlog.println("Handshake Successful!");
+    openlog.println("Beggining Binary Data");
   } else {
-    openlog.println("Handshake Failure! :(");
+    openlog.println("Handshake Failure! :( Will Retry Soon");
   }
   
-  openlog.println("Beggining Binary Data");
+
 }
 
 void loop() {
   int respCount;
-  
+  if (digitalRead(OkPin) == 1) {
   delay(5000);
   sendCMD(CMD_POLL);
   respCount = getResp(3000);
+  if (respCount > 0) {
   printBuffer(respCount);
-}
+  } 
+  else {
+    
+    openlog.println("Error.... No Data");
+      digitalWrite(OkPin, LOW);
+} }
+else {
 
+  delay (60000);
+  openlog.println("Waited 60 seconds, now try again");
+  
+  // Send a reset command three times, like the software does
+  for (int i = 0; i < 4; i++) {
+    sendCMD(CMD_RESET);
+    delay(1000);
+  }
+  
+  // Flush any stange data from the Serial port
+  Serial.flush();
+  
+  openlog.println("Performing Handshake... ");
+  if (handshake()) {
+    openlog.println("Handshake Successful!");
+  } else {
+    openlog.println("Handshake Failure! :( Will Retry Soon");
+  }}
+}

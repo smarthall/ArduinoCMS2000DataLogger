@@ -29,11 +29,26 @@
 #define CMS2000_ERROR_TIMEOUT  4
 #define CMS2000_ERROR_CHECKSUM 5
 
+#define CMS2000_STATE_INIT       0
+#define CMS2000_STATE_CONNECTED  1
+
 class CMS2000
 {
   public:
-    CMS2000();
+    CMS2000(unsigned int myDst);
+    
+    
+    
+    String getSerial();
+    int getState();
+    unsigned int getDestination();
   private:
+    // Variables
+    char serial[11];
+    unsigned int dst;
+    int state;
+  
+    // Methods
     void sendCmd(unsigned int src, unsigned int dst, byte mode, byte type, byte extraCount, byte *extraData);
     int recvCmd(unsigned int *src, unsigned int *dst, byte *mode, byte *type, byte *extraCount, byte *extraData);
     byte sendByte(byte toSend);

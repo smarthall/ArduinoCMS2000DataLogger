@@ -54,6 +54,25 @@
 #define CMS2000_DATA         0x82
 #define CMS2000_INFO         0x83
 
+CMS2000::CMS2000(unsigned int myDst) {
+  dst = myDst;
+}
+
+String CMS2000::getSerial() {
+  if (state == CMS2000_STATE_CONNECTED) {
+    return String(serial);
+  } else {
+    return String();
+  }
+}
+
+int CMS2000::getState() {
+  return state;
+}
+
+unsigned int CMS2000::getDestination() {
+  return dst;
+}
 
 void CMS2000::sendCmd(unsigned int src, unsigned int dst, byte mode,
                       byte type, byte extraCount = 0, byte *extraData = NULL) {

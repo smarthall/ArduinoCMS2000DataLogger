@@ -52,7 +52,7 @@
 #define CMS2000_SERIAL       0x80
 #define CMS2000_ACK          0x81
 #define CMS2000_DATA         0x82
-#define CMS2000_INFO         0x832
+#define CMS2000_INFO         0x83
 
 
 void CMS2000::sendCmd(unsigned int src, unsigned int dst, byte mode,

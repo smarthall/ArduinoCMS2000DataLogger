@@ -129,7 +129,7 @@ boolean handshake() {
   
   // Write out the command
   // Manually because we need to calculate checksum
-  bytesTo = commands[CMD_SEND_SERIAL][0] + 1;
+  bytesTo = commands[CMD_SEND_SERIAL][0];
   for (int i = 1; i <= bytesTo; i++) {
     Serial.write(commands[CMD_SEND_SERIAL][i]);
     checksum += commands[CMD_SEND_SERIAL][i];

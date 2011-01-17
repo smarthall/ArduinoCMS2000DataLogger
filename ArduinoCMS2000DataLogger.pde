@@ -121,7 +121,8 @@ boolean handshake() {
   for (int i = 9; i <= 18; i++) {
     serial[i - 9] = recieveBuffer[i];
   }
-  serial[10] = '\0';
+
+  serial[11] = '\0';
   
   // Put serial in the log
   openlog.print("Serial Number is: ");
@@ -129,13 +130,13 @@ boolean handshake() {
   
   // Write out the command
   // Manually because we need to calculate checksum
-  bytesTo = commands[CMD_SEND_SERIAL][0] + 1;
+  bytesTo = commands[CMD_SEND_SERIAL][0];
   for (int i = 1; i <= bytesTo; i++) {
     Serial.write(commands[CMD_SEND_SERIAL][i]);
     checksum += commands[CMD_SEND_SERIAL][i];
   }
   
-  for (int i = 0; i < 10; i++) {
+  for (int i = 1; i <= 10; i++) {
     Serial.write(serial[i]);
     checksum += serial[i];
   }

@@ -119,7 +119,7 @@ boolean handshake() {
     
   // Get serial
   for (int i = 9; i <= 18; i++) {
-    serial[i - 9] = recieveBuffer[i];
+    serial[i - 8] = recieveBuffer[i];
   }
 
   serial[11] = '\0';
@@ -133,19 +133,24 @@ boolean handshake() {
   bytesTo = commands[CMD_SEND_SERIAL][0];
   for (int i = 1; i <= bytesTo; i++) {
     Serial.write(commands[CMD_SEND_SERIAL][i]);
+    openlog.print(commands[CMD_SEND_SERIAL][i]);
     checksum += commands[CMD_SEND_SERIAL][i];
   }
   
   for (int i = 1; i <= 10; i++) {
     Serial.write(serial[i]);
+    openlog.print(serial[i]);
     checksum += serial[i];
   }
   
-  Serial.write(0x01);
+  Serial.print(0x01, BYTE);
+  openlog.print(0x01, BYTE);
   checksum += 0x01;
 
   Serial.write(checksum >> 8);
-  Serial.write(checksum & 0xFF);
+  openlog.print(checksum >> 8);
+  Serial.print(checksum & 0xFF, BYTE);
+  openlog.print(checksum & 0xFF, BYTE);
   
   // Wait for three seconds
   respCount = getResp(3000);

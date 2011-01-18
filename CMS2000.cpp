@@ -23,6 +23,9 @@
 // Recieve Timeout
 #define CMS2000_RECIEVE_TIMEOUT 3000
 
+// Communication start
+#define CMS2000_COMM_START   0xAAAA
+
 // Command Modes
 #define CMS2000_MODE_NETWORK 0
 #define CMS2000_MODE_COMMS   1
@@ -56,6 +59,34 @@
 
 CMS2000::CMS2000(unsigned int myDst) {
   dst = myDst;
+  state = CMS2000_STATE_INIT;
+  serial[0] = '\0';
+}
+
+int CMS2000::handshake() {
+  int readResponse;
+  unsigned int src, dst;
+  byte mode, type, extraCount;
+  byte extraData[64];
+  
+  // Reset CMS2000 network three times
+  for (int i = 0; i < 3; i++) {
+    sendCmd(CMS2000_SELF, CMS2000_BROADCAST, CMS2000_MODE_NETWORK, CMS2000_RESET, 0, NULL);
+    delay(500);
+  }
+  
+  // Query the network looking for inverters
+  sendCmd(CMS2000_SELF, CMS2000_BROADCAST, CMS2000_MODE_NETWORK, CMS2000_QUERY, 0, NULL);
+  
+  // Expect a response from an inverter
+  readResponse = recvCmd(&src, &dst, &mode, &type, &extraCount, extraData);
+  if (readResponse != CMS2000_SUCCESS)
+    return readResponse;
+    
+  if ((dst != CMS2000_SELF) || (mode != CMS2000_MODE_NETWORK) || (type != CMS2000_SERIAL) || (extraCount != 10))
+    return CMS2000_ERROR_INVALID;
+  
+  memcpy(serial, extraData, extraCount);
 }
 
 String CMS2000::getSerial() {
@@ -79,7 +110,7 @@ void CMS2000::sendCmd(unsigned int src, unsigned int dst, byte mode,
   int checksum = 0;
   
   // Command beginning
-  checksum += sendInt(0xAAAA);
+  checksum += sendInt(CMS2000_COMM_START);
   
   // Source Address
   checksum += sendInt(src);
@@ -117,7 +148,7 @@ int CMS2000::recvCmd(unsigned int *src, unsigned int *dst, byte *mode,
   if (recvInt(&checksum, &intRead, quitAt) != CMS2000_SUCCESS)
     return CMS2000_ERROR_TIMEOUT;
     
-  if (intRead != 0xAAAA)
+  if (intRead != CMS2000_COMM_START)
     return CMS2000_ERROR_NOSTART;
     
   if (recvInt(&checksum, src, quitAt) != CMS2000_SUCCESS)
@@ -135,6 +166,7 @@ int CMS2000::recvCmd(unsigned int *src, unsigned int *dst, byte *mode,
   if (recvByte(&checksum, extraCount, quitAt) != CMS2000_SUCCESS)
     return CMS2000_ERROR_TIMEOUT;
   
+  // TODO: Buffer overflow potential
   for (int i = 0; i < *extraCount; i++) {
     if (recvByte(&checksum, extraData + i, quitAt) != CMS2000_SUCCESS)
       return CMS2000_ERROR_TIMEOUT;

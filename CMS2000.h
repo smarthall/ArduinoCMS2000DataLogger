@@ -36,8 +36,7 @@ class CMS2000
 {
   public:
     CMS2000(unsigned int myDst);
-    
-    
+    int handshake();
     
     String getSerial();
     int getState();

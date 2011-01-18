@@ -83,10 +83,25 @@ int CMS2000::handshake() {
   if (readResponse != CMS2000_SUCCESS)
     return readResponse;
     
+  // Check that the packet was for us, is of type serial and has ten digits of serial
   if ((dst != CMS2000_SELF) || (mode != CMS2000_MODE_NETWORK) || (type != CMS2000_SERIAL) || (extraCount != 10))
     return CMS2000_ERROR_INVALID;
   
+  // Copy the serial into the serial string
   memcpy(serial, extraData, extraCount);
+  serial[extraCount] = '\0';
+  
+  // Assign an address to the inverter
+  sendCmd(CMS2000_SELF, CMS2000_BROADCAST, CMS2000_MODE_NETWORK, CMS2000_ASSIGN, 10, extraData);
+  
+  // Check the inverter has accepted the new address
+  readResponse = recvCmd(&src, &dst, &mode, &type, &extraCount, extraData);
+  if (readResponse != CMS2000_SUCCESS)
+    return readResponse;
+    
+  // Check that the packet was for us, is of type acknowledgement and has no extra data
+  if ((dst != CMS2000_SELF) || (mode != CMS2000_MODE_NETWORK) || (type != CMS2000_ACK) || (extraCount == 0))
+    return CMS2000_ERROR_INVALID;
 }
 
 String CMS2000::getSerial() {

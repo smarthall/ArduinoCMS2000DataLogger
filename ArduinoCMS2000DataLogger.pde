@@ -119,9 +119,10 @@ boolean handshake() {
     
   // Get serial
   for (int i = 9; i <= 18; i++) {
-    serial[i - 9] = recieveBuffer[i];
+    serial[i - 8] = recieveBuffer[i];
   }
-  serial[10] = '\0';
+
+  serial[11] = '\0';
   
   // Put serial in the log
   openlog.print("Serial Number is: ");
@@ -129,22 +130,27 @@ boolean handshake() {
   
   // Write out the command
   // Manually because we need to calculate checksum
-  bytesTo = commands[CMD_SEND_SERIAL][0] + 1;
+  bytesTo = commands[CMD_SEND_SERIAL][0];
   for (int i = 1; i <= bytesTo; i++) {
     Serial.write(commands[CMD_SEND_SERIAL][i]);
+    openlog.print(commands[CMD_SEND_SERIAL][i]);
     checksum += commands[CMD_SEND_SERIAL][i];
   }
   
-  for (int i = 0; i < 10; i++) {
+  for (int i = 1; i <= 10; i++) {
     Serial.write(serial[i]);
+    openlog.print(serial[i]);
     checksum += serial[i];
   }
   
-  Serial.write(0x01);
+  Serial.print(0x01, BYTE);
+  openlog.print(0x01, BYTE);
   checksum += 0x01;
 
   Serial.write(checksum >> 8);
-  Serial.write(checksum & 0xFF);
+  openlog.print(checksum >> 8);
+  Serial.print(checksum & 0xFF, BYTE);
+  openlog.print(checksum & 0xFF, BYTE);
   
   // Wait for three seconds
   respCount = getResp(3000);
@@ -192,19 +198,46 @@ void setup() {
   openlog.println("Performing Handshake... ");
   if (handshake()) {
     openlog.println("Handshake Successful!");
+    openlog.println("Beggining Binary Data");
   } else {
-    openlog.println("Handshake Failure! :(");
+    openlog.println("Handshake Failure! :( Will Retry Soon");
   }
   
-  openlog.println("Beggining Binary Data");
+
 }
 
 void loop() {
   int respCount;
-  
+  if (digitalRead(OkPin) == 1) {
   delay(5000);
   sendCMD(CMD_POLL);
   respCount = getResp(3000);
+  if (respCount > 0) {
   printBuffer(respCount);
-}
+  } 
+  else {
+    
+    openlog.println("Error.... No Data");
+      digitalWrite(OkPin, LOW);
+} }
+else {
 
+  delay (60000);
+  openlog.println("Waited 60 seconds, now try again");
+  
+  // Send a reset command three times, like the software does
+  for (int i = 0; i < 4; i++) {
+    sendCMD(CMD_RESET);
+    delay(1000);
+  }
+  
+  // Flush any stange data from the Serial port
+  Serial.flush();
+  
+  openlog.println("Performing Handshake... ");
+  if (handshake()) {
+    openlog.println("Handshake Successful!");
+  } else {
+    openlog.println("Handshake Failure! :( Will Retry Soon");
+  }}
+}

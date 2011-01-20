@@ -111,7 +111,7 @@ boolean handshake() {
   sendCMD(CMD_GET_SERIAL);
   
   // Wait for three seconds
-  respCount = getResp(3000);
+  respCount = getResp(1000);
   
   // Check the response is valid
   if (!checkResp(respCount, RESP_SERIAL))
@@ -148,7 +148,7 @@ boolean handshake() {
   Serial.print(checksum & 0xFF, BYTE);
   
   // Wait for three seconds
-  respCount = getResp(3000);
+  respCount = getResp(1000);
   
   // Check the response is valid
   if (!checkResp(respCount, RESP_CONFIRM))
@@ -203,15 +203,58 @@ void setup() {
 
 void loop() {
   int respCount;
+  int high_byte;
+  int low_byte;
+  int Data[14];
+  
   if (digitalRead(OkPin) == 1) {
-  delay(5000);
+  delay(9000);
   sendCMD(CMD_POLL);
-  respCount = getResp(3000);
+  respCount = getResp(1000);
   if (respCount > 0) {
-  printBuffer(respCount);
-  } 
+    openlog.print(millis());
+    for (int i = 9, j = 0; i < 36; i++) {
+      
+      
+      high_byte = recieveBuffer[i] * 256;
+      i++;
+      low_byte = recieveBuffer[i];
+      Data[j] = high_byte + low_byte;
+      j++;
+      
+      }
+  
+  openlog.print(',');
+  openlog.print(Data[0]);
+  openlog.print(',');
+  openlog.print(Data[1]);
+  openlog.print(',');
+  openlog.print(Data[2]);
+  openlog.print(',');
+  openlog.print(Data[3]);
+  openlog.print(',');
+  openlog.print(Data[4]);
+  openlog.print(',');
+  openlog.print(Data[5]);
+  openlog.print(',');
+  openlog.print(Data[6]);
+  openlog.print(',');
+  openlog.print(Data[9]);
+  openlog.print(',');
+  openlog.print(Data[10]);
+  openlog.print(',');
+  openlog.print(Data[13]);
+  openlog.print(',');
+  openlog.print(Data[14]);
+  openlog.println('\n');
+  
+  
+  
+  
+  }
+  
   else {
-    
+    openlog.println('\n');
     openlog.println("Error.... No Data");
       digitalWrite(OkPin, LOW);
 } }
